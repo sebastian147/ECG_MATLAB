@@ -72,7 +72,7 @@ function varargout = untitled_OutputFcn(hObject, eventdata, handles)
 % Get default command line output from handles structure
 varargout{1} = handles.output;
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%SUBIR ARCHIVO
 % --- Executes on button press in pushbutton1.
 function pushbutton1_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton1 (see GCBO)
@@ -104,7 +104,39 @@ subplot(2,2,3)
 plot(t,dt_ecgnl), grid
 
 %%elimino ruido
- 
+%%Aplico un filtro:
+h= fir1(1,1/1000*2,'high');
+y_filter = filter(h,1,dt_ecgnl);
+subplot(2,2,4)
+plot(t,y_filter), grid
+
+%Haciendo cuadrada dla señal:
+detectsq= y_filter .^2;
+figure(1);
+plot(detectsq);
+%Detectando los pulsos:
+last=0;
+upFlag=0;
+pulse=zeros(lenght(detectsq),1);
+for i=1:lenght(detectsq)
+    if(detectsq(i)>0.5)
+        if(upFlag == 0)
+            if(last>0)
+                t=i-last;
+                p=1000/t*60;
+            end
+            last=i;
+        end
+        upFlag=100;
+    else
+        if(upFlag>0)
+            upFlag=upFlag-1;
+        end
+    end
+    pulse(i)=p;
+end
+figure(2);
+plot(pulse);
 % x=0.5:1:10;
 % y=2*x;
 % subplot(2,2,1:2)
