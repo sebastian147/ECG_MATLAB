@@ -1,5 +1,5 @@
 clc;
-
+clear;
 
 %%cargo el archivo
 [filename, pathname] = uigetfile('*.mat', 'Open file .mat');
@@ -24,6 +24,5 @@ f_y = polyval(p,t,[],mu);
 dt_ecgnl = val - f_y;
 subplot(2,1,2)
 plot(t,dt_ecgnl), grid
-
 
 %%elimino ruido
