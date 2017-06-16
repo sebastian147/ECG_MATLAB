@@ -26,8 +26,8 @@ archivo(end)='f';
 archivo(end+1)='o';
 info=strcat(ruta,archivo);
 info_point =fopen(info,'r');
-frecuencia="Sampling frequency:";
-frecuencian=strlength(frecuencia);
+%frecuencia="Sampling frequency:";
+%frecuencian=strlength(frecuencia);
 
 [a,b,c,d,e,f,g,h]=textread(info,'%s %s %s %s %s %s %s %s'); %%cargo el archivo en un vector por columnas
 fclose(info_point);

@@ -22,7 +22,7 @@ function varargout = untitled(varargin)
 
 % Edit the above text to modify the response to help untitled
 
-% Last Modified by GUIDE v2.5 06-Jun-2017 13:26:15
+% Last Modified by GUIDE v2.5 13-Jun-2017 15:52:49
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -80,73 +80,109 @@ function pushbutton1_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 %%cargo el archivo
-[filename, pathname] = uigetfile('*.mat', 'Open file .mat');
-if isequal(filename, 0) || isequal(pathname, 0)   
+[archivo, ruta] = uigetfile('*.mat', 'Open file .mat');
+if isequal(archivo, 0) || isequal(ruta, 0)   
     disp('Entrada de archivo cancelada.');  
    ECG_Data = [];  
 else
-load (filename);
-end;
-
-ECGsignal = (val -1024)/200;
-Fs=360;
-t= (0:length(ECGsignal)-1)/Fs;
-subplot(2,2,1:2)
-plot(t,ECGsignal)  , grid
-
-
-%%pongo todo en el eje x
-opol = 6;
-[p,s,mu] = polyfit(t,val,opol);
-f_y = polyval(p,t,[],mu);
-dt_ecgnl = val - f_y;
-subplot(2,2,3)
-plot(t,dt_ecgnl), grid
-
-%%elimino ruido
-%%Aplico un filtro:
-h= fir1(1,1/1000*2,'high');
-y_filter = filter(h,1,dt_ecgnl);
-subplot(2,2,4)
-plot(t,y_filter), grid
-
-%Haciendo cuadrada dla señal:
-detectsq= y_filter .^2;
-figure(1);
-plot(detectsq);
-%Detectando los pulsos:
-last=0;
-upFlag=0;
-pulse=zeros(lenght(detectsq),1);
-for i=1:lenght(detectsq)
-    if(detectsq(i)>0.5)
-        if(upFlag == 0)
-            if(last>0)
-                t=i-last;
-                p=1000/t*60;
-            end
-            last=i;
-        end
-        upFlag=100;
-    else
-        if(upFlag>0)
-            upFlag=upFlag-1;
-        end
-    end
-    pulse(i)=p;
+load ([ruta archivo]);
+senial_archivo=val;
 end
-figure(2);
-plot(pulse);
-% x=0.5:1:10;
-% y=2*x;
-% subplot(2,2,1:2)
-% plot(12.*y);
-% subplot(2,2,3)
-% plot(10.*y);
-% subplot(2,2,4)
-% plot(y);
 
 
+m=size(senial_archivo);
+if(m(1) ~= 1)%problema de archivos con mas columnas
+
+    senial_archivo(2:m(1),:)=[];
+end
+
+%%leo el archivo .info genericamente
+archivo(end-2)='i';
+archivo(end-1)='n';
+archivo(end)='f';
+archivo(end+1)='o';
+info=strcat(ruta,archivo);
+info_point =fopen(info,'r');
+%frecuencia="Sampling frequency:";
+%frecuencian=strlength(frecuencia);
+
+[a,b,c,d,e,f,g,h]=textread(info,'%s %s %s %s %s %s %s %s'); %%cargo el archivo en un vector por columnas
+fclose(info_point);
+
+Fs=str2double(c(5));
+gain=str2double(c(7));
+base=str2double(d(7));
+
+
+
+%%cargo la senial del archivo
+senial = (senial_archivo -base)/gain;
+t= (0:length(senial)-1)/Fs;
+figure(1)
+subplot(2,1,1)
+plot(t,senial)  , grid
+
+
+%%pongo todo en el eje 0
+opol = 6;
+m=length(senial_archivo);
+[p,s,mu] = polyfit(t,senial_archivo,opol);
+f_y = polyval(p,t,[],mu);
+y = senial_archivo - f_y;
+subplot(2,1,2)
+plot(t,y), grid
+
+
+%%elimnio el ruido de la senial 50 hz y 60 hz
+a=fir1(100,0.1,'stop');
+
+y2=filter(a,1,y);
+figure (2)
+subplot(2,1,1)
+plot(t,y2), grid
+subplot(2,1,2)
+plot(a), grid
+
+%%calculo el ritmo cardiaco
+
+
+%no se que hace este filtro
+h=fir1(1000,1/(360/2),'high');%nysquit frecuenci(revisar
+y3=filter(h,1,y2);
+figure (3)
+subplot(2,1,1)
+plot(t,y3), grid
+subplot(2,1,2)
+plot(h), grid
+
+
+%deteccion
+maximo=abs(max(y2));
+maximo=maximo/2;
+flag=0;
+j=1;
+for i=1:length(y2)
+    if(y2(i)>maximo)%si supera un valor generico de los picos mayores
+       if(y2(i)<y2(i-1))
+        if(flag==0)
+            tiempo(j)=i;
+            flag=1;
+            j=j+1;
+        end
+       end
+    end
+    if(y2(i)<0)
+        flag=0;
+    end
+
+end
+promedio=0;
+s=1;
+for i=1:length(tiempo)-1
+    promedio(s)=tiempo(i+1)-tiempo(i);
+    s=s+1;
+end
+ritmo=sum(promedio)/(length(promedio)*60*0.1)   %hago el promedio, lo divido por el intervalo de tiempo y 60 para pasar a pulsaciones por minuto
 
 
 % --- Executes on button press in pushbutton2.
@@ -193,4 +229,27 @@ function slider2_CreateFcn(hObject, eventdata, handles)
 % Hint: slider controls usually have a light gray background.
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
+
+
+% --- Executes on selection change in popupmenu1.
+function popupmenu1_Callback(hObject, eventdata, handles)
+% hObject    handle to popupmenu1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns popupmenu1 contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from popupmenu1
+
+
+% --- Executes during object creation, after setting all properties.
+function popupmenu1_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to popupmenu1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
 end
