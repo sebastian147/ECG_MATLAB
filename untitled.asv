@@ -238,19 +238,7 @@ function pushbutton3_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton3 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global t y2 a h y3;
-figure ('Name','Filtro Elnimina ruido 50/60 HZ')
-subplot(2,1,1)
-%%axes(handles.axes2);
-plot(t,y2), grid
-subplot(2,1,2)
-plot(a), grid
 
-figure ('Name','Filtro de Alta Frecuencia')
-subplot(2,1,1)
-plot(t,y3), grid
-subplot(2,1,2)
-plot(h), grid
 
 
 % --------------------------------------------------------------------
@@ -265,16 +253,17 @@ function Untitled_2_Callback(hObject, eventdata, handles)
 % hObject    handle to Untitled_2 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global t y2 a h y3;
-figure ('Name','Filtro Elnimina ruido 50/60 HZ')
+global t y2 a;
+figure (2)
 subplot(2,1,1)
 %%axes(handles.axes2);
 plot(t,y2), grid
 subplot(2,1,2)
 plot(a), grid
 
-figure ('Name','Filtro de Alta Frecuencia')
+figure (3)
 subplot(2,1,1)
+axes(handles.axes3);
 plot(t,y3), grid
 subplot(2,1,2)
 plot(h), grid
